@@ -43,7 +43,7 @@ if(CMAKE_SYSTEM_NAME MATCHES "Android|Linux")
 endif()
 
 if(CMAKE_SYSTEM_NAME STREQUAL "Android")
-    target_include_directories(GoogleBreakpadCommon PRIVATE src/src/common/android/include)
+    target_include_directories(GoogleBreakpadCommon PUBLIC src/src/common/android/include)
     target_sources(GoogleBreakpadCommon PRIVATE src/src/common/android/breakpad_getcontext.S)
     target_link_libraries(GoogleBreakpadCommon PUBLIC -llog)
 endif()
