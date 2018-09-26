@@ -23,7 +23,10 @@ elseif (CMAKE_SYSTEM_NAME STREQUAL "iOS") # ====================================
     target_sources(KDHockeyApp PRIVATE KDHockeyAppManager_ios.mm)
 elseif (CMAKE_SYSTEM_NAME STREQUAL "Linux") # ==========================================================================
     target_sources(KDHockeyApp PRIVATE KDHockeyAppManager_linux.cpp)
+elseif (CMAKE_SYSTEM_NAME STREQUAL "Windows") # ========================================================================
+    target_sources(KDHockeyApp PRIVATE KDHockeyAppManager_windows.cpp)
 else() # ===============================================================================================================
+    message(WARNING "KDHockeyApp doesn't support crash reporting for ${CMAKE_SYSTEM_NAME}.")
     target_sources(KDHockeyApp PRIVATE KDHockeyAppManager_generic.cpp)
 endif() # ==============================================================================================================
 
