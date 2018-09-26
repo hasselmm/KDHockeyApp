@@ -1,4 +1,4 @@
-add_library(GoogleBreakpadCommon STATIC) # ===================================================================================
+add_library(GoogleBreakpadCommon STATIC) # =============================================================================
 
 target_compile_definitions(GoogleBreakpadCommon PRIVATE -D__STDC_LIMIT_MACROS)
 target_include_directories(GoogleBreakpadCommon PUBLIC src/src)
@@ -7,7 +7,7 @@ target_sources(GoogleBreakpadCommon PRIVATE src/src/common/convert_UTF.c)
 target_sources(GoogleBreakpadCommon PRIVATE src/src/common/md5.cc)
 target_sources(GoogleBreakpadCommon PRIVATE src/src/common/string_conversion.cc)
 
-if(CMAKE_SYSTEM_NAME MATCHES "Android|Linux")
+if (CMAKE_SYSTEM_NAME MATCHES "Android|Linux")
     target_sources(GoogleBreakpadCommon PRIVATE src/src/common/linux/elfutils.cc)
     target_sources(GoogleBreakpadCommon PRIVATE src/src/common/linux/file_id.cc)
     target_sources(GoogleBreakpadCommon PRIVATE src/src/common/linux/guid_creator.cc)
@@ -16,12 +16,12 @@ if(CMAKE_SYSTEM_NAME MATCHES "Android|Linux")
     target_sources(GoogleBreakpadCommon PRIVATE src/src/common/linux/safe_readlink.cc)
 endif()
 
-add_library(GoogleBreakpadClient STATIC) # ===================================================================================
+add_library(GoogleBreakpadClient STATIC) # =============================================================================
 
 target_compile_definitions(GoogleBreakpadClient PRIVATE -D__STDC_LIMIT_MACROS)
 target_link_libraries(GoogleBreakpadClient PUBLIC GoogleBreakpadCommon)
 
-if(CMAKE_SYSTEM_NAME MATCHES "Android|Linux")
+if (CMAKE_SYSTEM_NAME MATCHES "Android|Linux")
     target_sources(GoogleBreakpadCommon PRIVATE src/src/common/linux/elfutils.cc)
     target_sources(GoogleBreakpadCommon PRIVATE src/src/common/linux/file_id.cc)
     target_sources(GoogleBreakpadCommon PRIVATE src/src/common/linux/guid_creator.cc)
@@ -42,7 +42,7 @@ if(CMAKE_SYSTEM_NAME MATCHES "Android|Linux")
     target_sources(GoogleBreakpadClient PRIVATE src/src/client/linux/minidump_writer/minidump_writer.cc)
 endif()
 
-if(CMAKE_SYSTEM_NAME STREQUAL "Android")
+if (CMAKE_SYSTEM_NAME STREQUAL "Android")
     target_include_directories(GoogleBreakpadCommon PUBLIC src/src/common/android/include)
     target_sources(GoogleBreakpadCommon PRIVATE src/src/common/android/breakpad_getcontext.S)
     target_link_libraries(GoogleBreakpadCommon PUBLIC -llog)

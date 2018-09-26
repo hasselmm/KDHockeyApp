@@ -12,16 +12,16 @@ target_sources(KDHockeyApp PRIVATE KDHockeyAppLiterals.cpp KDHockeyAppLiterals_p
 target_sources(KDHockeyApp PRIVATE KDHockeyAppManager.cpp KDHockeyAppManager.h KDHockeyAppManager_p.h)
 target_sources(KDHockeyApp PRIVATE KDHockeyAppSoftAssert.cpp KDHockeyAppSoftAssert_p.h)
 
-if(KDHOCKEYAPP_QMLSUPPORT_ENABLED)
+if (KDHOCKEYAPP_QMLSUPPORT_ENABLED)
     target_link_libraries(KDHockeyApp PUBLIC Qt5::QmlPrivate)
 endif()
 
-if(CMAKE_SYSTEM_NAME STREQUAL "Android") # =============================================================================
+if (CMAKE_SYSTEM_NAME STREQUAL "Android") # ============================================================================
     target_link_libraries(KDHockeyApp PRIVATE Qt5::AndroidExtras)
     target_sources(KDHockeyApp PRIVATE KDHockeyAppManager_android.cpp)
-elseif(CMAKE_SYSTEM_NAME STREQUAL "iOS") # =============================================================================
+elseif (CMAKE_SYSTEM_NAME STREQUAL "iOS") # ============================================================================
     target_sources(KDHockeyApp PRIVATE KDHockeyAppManager_ios.mm)
-elseif(CMAKE_SYSTEM_NAME STREQUAL "Linux") # ===========================================================================
+elseif (CMAKE_SYSTEM_NAME STREQUAL "Linux") # ==========================================================================
     target_sources(KDHockeyApp PRIVATE KDHockeyAppManager_linux.cpp)
 else() # ===============================================================================================================
     target_sources(KDHockeyApp PRIVATE KDHockeyAppManager_generic.cpp)
