@@ -27,3 +27,4 @@ if(NOT KDHOCKEYAPP_SKIP_EXAMPLES)
 endif()
 
 add_subdirectory(src)
+add_subdirectory(tools)

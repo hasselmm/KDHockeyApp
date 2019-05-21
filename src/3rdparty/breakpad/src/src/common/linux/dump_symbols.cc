@@ -397,10 +397,10 @@ bool LoadELF(const string& obj_file, MmapWrapper* map_wrapper,
     return false;
   }
   void* obj_base = mmap(NULL, st.st_size,
-                        PROT_READ | PROT_WRITE, MAP_PRIVATE, obj_fd, 0);
+                        PROT_READ /*| PROT_WRITE*/, MAP_PRIVATE, obj_fd, 0);
   if (obj_base == MAP_FAILED) {
-    fprintf(stderr, "Failed to mmap ELF file '%s': %s\n",
-            obj_file.c_str(), strerror(errno));
+    fprintf(stderr, "Failed to mmap ELF file '%s': %s (%d)\n",
+            obj_file.c_str(), strerror(errno), errno);
     return false;
   }
   map_wrapper->set(obj_base, st.st_size);
