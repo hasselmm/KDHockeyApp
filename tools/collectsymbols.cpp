@@ -6,7 +6,6 @@
 
 #include <private/qzipwriter_p.h>
 
-#include <experimental/optional>
 #include <memory>
 
 namespace KDHockeyApp {
@@ -68,10 +67,10 @@ public:
             return EXIT_FAILURE;
 
         const auto dependencyList = dependencies(target);
-        if (!dependencyList)
+        if (!dependencyList.first)
             return EXIT_FAILURE;
 
-        for (const auto &libraryName: *dependencyList) {
+        for (const auto &libraryName: dependencyList.second) {
             if (!dumpSymbols(findLibrary(libraryName)))
                 return EXIT_FAILURE;
         }
@@ -80,7 +79,7 @@ public:
     }
 
 private:
-    std::experimental::optional<QStringList> dependencies(const QString &fileName)
+    std::pair<bool, QStringList> dependencies(const QString &fileName)
     {
         QProcess readElf;
         readElf.setReadChannel(QProcess::StandardOutput);
@@ -105,7 +104,7 @@ private:
         if (!readElf.waitForFinished())
             return {};
 
-        return dependencies;
+        return {true, dependencies};
     }
 
     QString findLibrary(const QString &libraryName)
