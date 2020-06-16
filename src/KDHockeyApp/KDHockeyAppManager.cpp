@@ -560,16 +560,19 @@ void HockeyAppManager::findNewVersions()
         }
 
         d->newVersions.clear();
+
+        const auto appVersion = appInfo.versionCode ? QVersionNumber{appInfo.versionCode}
+                                                    : QVersionNumber::fromString(appInfo.versionName);
         const auto actualPlatformVersion = QVersionNumber::fromString(appInfo.platformVersion);
 
         for (const auto &value: versions) {
             const auto entry = value.toObject();
-            const auto versionCode = entry["version"_l1].toString().toInt();
-            const auto largerVersionCode = versionCode > appInfo.versionCode;
+            const auto updateVersion = QVersionNumber::fromString(entry["version"_l1].toString());
+            const auto largerVersionCode = updateVersion > appVersion;
 
             const auto packageTimestamp = qRound64(entry["timestamp"_l1].toDouble() * 1000);
             const auto installTimestamp = QFileInfo{qApp->applicationFilePath()}.lastModified().toMSecsSinceEpoch();
-            const auto newerPackageFile = versionCode == appInfo.versionCode && packageTimestamp > installTimestamp;
+            const auto newerPackageFile = updateVersion == appVersion && packageTimestamp > installTimestamp;
 
             const auto minimumPlatformVersion = QVersionNumber::fromString(entry["minimum_os_version"_l1].toString());
             const auto requirementsMet = minimumPlatformVersion <= actualPlatformVersion;

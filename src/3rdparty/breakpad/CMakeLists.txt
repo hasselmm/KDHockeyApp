@@ -1,3 +1,85 @@
+cmake_minimum_required(VERSION 3.14)
+
+if (CMAKE_CROSSCOMPILING)
+    message(STATUS "Building native toolchain in ${CMAKE_CURRENT_BINARY_DIR}/toolchain")
+
+    add_custom_target(
+        GoogleBreakpadToolchain ALL
+
+        COMMAND ${CMAKE_COMMAND}
+                -G${CMAKE_GENERATOR}
+                -S${CMAKE_CURRENT_SOURCE_DIR}
+                -B${CMAKE_CURRENT_BINARY_DIR}/toolchain
+                -DBREAKPAD_TARGET_NAME=${CMAKE_SYSTEM_NAME}
+
+        COMMAND ${CMAKE_COMMAND}
+                --build toolchain --target GoogleBreakpadToolchain)
+else()
+    add_custom_target(GoogleBreakpadToolchain)
+
+    if (CMAKE_SYSTEM_NAME MATCHES "Linux" OR BREAKPAD_TARGET_NAME MATCHES "Android")
+        add_executable(GoogleBreakpadDumpSyms EXCLUDE_FROM_ALL) # ======================================================
+        add_dependencies(GoogleBreakpadToolchain GoogleBreakpadDumpSyms)
+        target_compile_features(GoogleBreakpadDumpSyms PUBLIC cxx_std_14)
+        target_include_directories(GoogleBreakpadDumpSyms PUBLIC src/src)
+        set_property(TARGET GoogleBreakpadDumpSyms PROPERTY OUTPUT_NAME dump_syms)
+
+        if (WIN32)
+            target_include_directories(GoogleBreakpadDumpSyms PUBLIC mingw32glue)
+            target_link_libraries(GoogleBreakpadDumpSyms PRIVATE GoogleBreakpadCommon -lWS2_32)
+
+            target_sources(GoogleBreakpadDumpSyms PRIVATE mingw32glue/stdlib.c)
+            target_sources(GoogleBreakpadDumpSyms PRIVATE mingw32glue/stdlib.h)
+            target_sources(GoogleBreakpadDumpSyms PRIVATE mingw32glue/string.c)
+            target_sources(GoogleBreakpadDumpSyms PRIVATE mingw32glue/string.h)
+            target_sources(GoogleBreakpadDumpSyms PRIVATE mingw32glue/sys/mman.c)
+            target_sources(GoogleBreakpadDumpSyms PRIVATE mingw32glue/sys/mman.h)
+            target_sources(GoogleBreakpadDumpSyms PRIVATE mingw32glue/unistd.c)
+            target_sources(GoogleBreakpadDumpSyms PRIVATE mingw32glue/unistd.h)
+        endif()
+
+        target_sources(GoogleBreakpadDumpSyms PRIVATE src/src/common/dwarf/bytereader.cc)
+        target_sources(GoogleBreakpadDumpSyms PRIVATE src/src/common/dwarf/bytereader.h)
+        target_sources(GoogleBreakpadDumpSyms PRIVATE src/src/common/dwarf/dwarf2diehandler.cc)
+        target_sources(GoogleBreakpadDumpSyms PRIVATE src/src/common/dwarf/dwarf2diehandler.h)
+        target_sources(GoogleBreakpadDumpSyms PRIVATE src/src/common/dwarf/dwarf2reader.cc)
+        target_sources(GoogleBreakpadDumpSyms PRIVATE src/src/common/dwarf/dwarf2reader.h)
+        target_sources(GoogleBreakpadDumpSyms PRIVATE src/src/common/dwarf/elf_reader.cc)
+        target_sources(GoogleBreakpadDumpSyms PRIVATE src/src/common/dwarf/elf_reader.h)
+        target_sources(GoogleBreakpadDumpSyms PRIVATE src/src/common/dwarf_cfi_to_module.cc)
+        target_sources(GoogleBreakpadDumpSyms PRIVATE src/src/common/dwarf_cfi_to_module.h)
+        target_sources(GoogleBreakpadDumpSyms PRIVATE src/src/common/dwarf_cu_to_module.cc)
+        target_sources(GoogleBreakpadDumpSyms PRIVATE src/src/common/dwarf_cu_to_module.h)
+        target_sources(GoogleBreakpadDumpSyms PRIVATE src/src/common/dwarf_line_to_module.cc)
+        target_sources(GoogleBreakpadDumpSyms PRIVATE src/src/common/dwarf_line_to_module.h)
+        target_sources(GoogleBreakpadDumpSyms PRIVATE src/src/common/language.cc)
+        target_sources(GoogleBreakpadDumpSyms PRIVATE src/src/common/language.h)
+        target_sources(GoogleBreakpadDumpSyms PRIVATE src/src/common/linux/crc32.cc)
+        target_sources(GoogleBreakpadDumpSyms PRIVATE src/src/common/linux/crc32.h)
+        target_sources(GoogleBreakpadDumpSyms PRIVATE src/src/common/linux/dump_symbols.cc)
+        target_sources(GoogleBreakpadDumpSyms PRIVATE src/src/common/linux/dump_symbols.h)
+        target_sources(GoogleBreakpadDumpSyms PRIVATE src/src/common/linux/elf_symbols_to_module.cc)
+        target_sources(GoogleBreakpadDumpSyms PRIVATE src/src/common/linux/elf_symbols_to_module.h)
+        target_sources(GoogleBreakpadDumpSyms PRIVATE src/src/common/linux/elfutils.cc)
+        target_sources(GoogleBreakpadDumpSyms PRIVATE src/src/common/linux/elfutils.h)
+        target_sources(GoogleBreakpadDumpSyms PRIVATE src/src/common/linux/file_id.cc)
+        target_sources(GoogleBreakpadDumpSyms PRIVATE src/src/common/linux/file_id.h)
+        target_sources(GoogleBreakpadDumpSyms PRIVATE src/src/common/linux/linux_libc_support.cc)
+        target_sources(GoogleBreakpadDumpSyms PRIVATE src/src/common/linux/linux_libc_support.h)
+        target_sources(GoogleBreakpadDumpSyms PRIVATE src/src/common/linux/memory_mapped_file.cc)
+        target_sources(GoogleBreakpadDumpSyms PRIVATE src/src/common/linux/memory_mapped_file.h)
+        target_sources(GoogleBreakpadDumpSyms PRIVATE src/src/common/module.cc)
+        target_sources(GoogleBreakpadDumpSyms PRIVATE src/src/common/module.h)
+        target_sources(GoogleBreakpadDumpSyms PRIVATE src/src/common/path_helper.cc)
+        target_sources(GoogleBreakpadDumpSyms PRIVATE src/src/common/path_helper.h)
+        target_sources(GoogleBreakpadDumpSyms PRIVATE src/src/common/stabs_reader.cc)
+        target_sources(GoogleBreakpadDumpSyms PRIVATE src/src/common/stabs_reader.h)
+        target_sources(GoogleBreakpadDumpSyms PRIVATE src/src/common/stabs_to_module.cc)
+        target_sources(GoogleBreakpadDumpSyms PRIVATE src/src/common/stabs_to_module.h)
+        target_sources(GoogleBreakpadDumpSyms PRIVATE src/src/tools/linux/dump_syms/dump_syms.cc)
+    endif()
+endif()
+
 add_library(GoogleBreakpadCommon STATIC) # =============================================================================
 
 target_compile_definitions(GoogleBreakpadCommon PRIVATE -D__STDC_LIMIT_MACROS)
@@ -14,28 +96,16 @@ target_sources(GoogleBreakpadCommon PRIVATE src/src/common/string_conversion.h)
 
 if (CMAKE_SYSTEM_NAME MATCHES "Android|Linux")
     target_sources(GoogleBreakpadCommon PRIVATE src/src/common/linux/elfutils.cc)
-    target_sources(GoogleBreakpadCommon PRIVATE src/src/common/linux/elfutils.cc)
-    target_sources(GoogleBreakpadCommon PRIVATE src/src/common/linux/elfutils.h)
     target_sources(GoogleBreakpadCommon PRIVATE src/src/common/linux/elfutils.h)
     target_sources(GoogleBreakpadCommon PRIVATE src/src/common/linux/file_id.cc)
-    target_sources(GoogleBreakpadCommon PRIVATE src/src/common/linux/file_id.cc)
-    target_sources(GoogleBreakpadCommon PRIVATE src/src/common/linux/file_id.h)
     target_sources(GoogleBreakpadCommon PRIVATE src/src/common/linux/file_id.h)
     target_sources(GoogleBreakpadCommon PRIVATE src/src/common/linux/guid_creator.cc)
-    target_sources(GoogleBreakpadCommon PRIVATE src/src/common/linux/guid_creator.cc)
-    target_sources(GoogleBreakpadCommon PRIVATE src/src/common/linux/guid_creator.h)
     target_sources(GoogleBreakpadCommon PRIVATE src/src/common/linux/guid_creator.h)
     target_sources(GoogleBreakpadCommon PRIVATE src/src/common/linux/linux_libc_support.cc)
-    target_sources(GoogleBreakpadCommon PRIVATE src/src/common/linux/linux_libc_support.cc)
-    target_sources(GoogleBreakpadCommon PRIVATE src/src/common/linux/linux_libc_support.h)
     target_sources(GoogleBreakpadCommon PRIVATE src/src/common/linux/linux_libc_support.h)
     target_sources(GoogleBreakpadCommon PRIVATE src/src/common/linux/memory_mapped_file.cc)
-    target_sources(GoogleBreakpadCommon PRIVATE src/src/common/linux/memory_mapped_file.cc)
-    target_sources(GoogleBreakpadCommon PRIVATE src/src/common/linux/memory_mapped_file.h)
     target_sources(GoogleBreakpadCommon PRIVATE src/src/common/linux/memory_mapped_file.h)
     target_sources(GoogleBreakpadCommon PRIVATE src/src/common/linux/safe_readlink.cc)
-    target_sources(GoogleBreakpadCommon PRIVATE src/src/common/linux/safe_readlink.cc)
-    target_sources(GoogleBreakpadCommon PRIVATE src/src/common/linux/safe_readlink.h)
     target_sources(GoogleBreakpadCommon PRIVATE src/src/common/linux/safe_readlink.h)
 
     if (CMAKE_SYSTEM_NAME MATCHES "Android")
@@ -66,10 +136,12 @@ target_compile_definitions(GoogleBreakpadClient PRIVATE -DUNICODE)
 
 target_link_libraries(GoogleBreakpadClient PUBLIC GoogleBreakpadCommon)
 
-if (CMAKE_SYSTEM_NAME MATCHES "Android|Linux")
+if (NOT CMAKE_SYSTEM_NAME MATCHES "Windows")
     target_sources(GoogleBreakpadClient PRIVATE src/src/client/minidump_file_writer.cc)
     target_sources(GoogleBreakpadClient PRIVATE src/src/client/minidump_file_writer.h)
+endif()
 
+if (CMAKE_SYSTEM_NAME MATCHES "Android|Linux")
     target_sources(GoogleBreakpadClient PRIVATE src/src/client/linux/crash_generation/crash_generation_client.cc)
     target_sources(GoogleBreakpadClient PRIVATE src/src/client/linux/crash_generation/crash_generation_client.h)
     target_sources(GoogleBreakpadClient PRIVATE src/src/client/linux/dump_writer_common/thread_info.cc)
@@ -91,9 +163,6 @@ if (CMAKE_SYSTEM_NAME MATCHES "Android|Linux")
     target_sources(GoogleBreakpadClient PRIVATE src/src/client/linux/minidump_writer/minidump_writer.cc)
     target_sources(GoogleBreakpadClient PRIVATE src/src/client/linux/minidump_writer/minidump_writer.h)
 elseif (CMAKE_SYSTEM_NAME MATCHES "iOS")
-    target_sources(GoogleBreakpadClient PRIVATE src/src/client/minidump_file_writer.cc)
-    target_sources(GoogleBreakpadClient PRIVATE src/src/client/minidump_file_writer.h)
-
     target_sources(GoogleBreakpadClient PRIVATE src/src/client/ios/exception_handler_no_mach.cc)
     target_sources(GoogleBreakpadClient PRIVATE src/src/client/ios/exception_handler_no_mach.h)
     target_sources(GoogleBreakpadClient PRIVATE src/src/client/mac/handler/breakpad_nlist_64.cc)
@@ -112,45 +181,3 @@ elseif (CMAKE_SYSTEM_NAME MATCHES "Windows")
     target_sources(GoogleBreakpadClient PRIVATE src/src/client/windows/handler/exception_handler.cc)
     target_sources(GoogleBreakpadClient PRIVATE src/src/client/windows/handler/exception_handler.h)
 endif()
-
-
-#[[
-linux {
-    QMAKE_CXXFLAGS_WARN_ON += \
-        -Wno-missing-field-initializers \
-        -Wno-unused-parameters \
-        -Wno-tautological-compare \
-        -Wno-tautological-constant-out-of-range-compare \
-        -Wno-unused-value
-}
-
-# Custom targets to build breakpad's dump_syms tool ------------------------------------------------
-
-equals(QMAKE_HOST.os, Linux) {
-    dumpsyms_configure.depends = $$_PRO_FILE_
-    dumpsyms_configure.target = $$BREAKPAD_HOSTDIR/Makefile
-    dumpsyms_configure.commands = \
-        mkdir -p $$BREAKPAD_HOSTDIR && \
-        cd $$BREAKPAD_HOSTDIR && \
-        $$PWD/src/configure
-
-    dumpsyms_build.depends = dumpsyms_configure
-    dumpsyms_build.target = $$BREAKPAD_HOSTDIR/src/tools/linux/dump_syms/dump_syms
-    dumpsyms_build.commands = +\$(MAKE) -C $$BREAKPAD_HOSTDIR
-
-    !equals(BREAKPAD_BUILDDIR, $$BREAKPAD_HOSTDIR) {
-        QMAKE_EXTRA_TARGETS += dumpsyms_build dumpsyms_configure
-        PRE_TARGETDEPS += $$dumpsyms_build.target
-    }
-}
-
-# Install targets ----------------------------------------------------------------------------------
-
-target.path = $$LIBDIR
-target.extra = \
-    $$QMAKE_COPY $$shell_path($$BREAKPAD_LIBRARY) \
-    $$shell_path($${QMAKE_PREFIX_STATICLIB}KDHockeyAppBreakpad.$${QMAKE_EXTENSION_STATICLIB})
-target.files += $${QMAKE_PREFIX_STATICLIB}KDHockeyAppBreakpad.$${QMAKE_EXTENSION_STATICLIB}
-
-INSTALLS += target
-]]
