@@ -224,6 +224,8 @@ class ExceptionHandler {
     UpdateNextID();  // Necessary to put dump_path_ in next_minidump_path_.
   }
 
+  wstring next_minidump_path() const { return next_minidump_path_; }
+
   // Requests that a previously reported crash be uploaded.
   bool RequestUpload(DWORD crash_id);
 
