@@ -54,7 +54,7 @@ public:
         if (!archive.endsWith(".zip"))
             return EXIT_FAILURE;
 
-        m_workDir = archive.left(archive.length() - 4);
+        m_workDir.setPath(archive.left(archive.length() - 4));
         m_workDir.removeRecursively();
 
         if (!m_workDir.mkpath(".")) {
