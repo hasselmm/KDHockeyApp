@@ -2,20 +2,22 @@ cmake_minimum_required(VERSION 3.14)
 
 if (CMAKE_CROSSCOMPILING)
     message(STATUS "Building native toolchain in ${CMAKE_CURRENT_BINARY_DIR}/toolchain")
-    option(QT_ROOT_NATIVE "Path of the native Qt version to use")
 
     if (NOT QT_ROOT_NATIVE)
         if (CMAKE_HOST_APPLE)
-            set(QT_ROOT_NATIVE "$ENV{QT_ROOT_MACOS}")
+            set(QT_ROOT_NATIVE "$ENV{QT_ROOT_MACOS}"
+                CACHE PATH "Path of the native Qt version to use")
         elseif (CMAKE_HOST_WIN32)
-            set(QT_ROOT_NATIVE "$ENV{QT_ROOT_WINDOWS}")
+            set(QT_ROOT_NATIVE "$ENV{QT_ROOT_WINDOWS}"
+                CACHE PATH "Path of the native Qt version to use")
         else()
-            set(QT_ROOT_NATIVE "$ENV{QT_ROOT_LINUX}")
+            set(QT_ROOT_NATIVE "$ENV{QT_ROOT_LINUX}"
+                CACHE PATH "Path of the native Qt version to use")
         endif()
     endif()
 
     add_custom_command(
-        COMMENT Configuring native toolchain
+        COMMENT Configuring native toolchain for KDHockeyApp
         OUTPUT toolchain/CMakeCache.txt
         DEPENDS CMakeLists.txt
 
@@ -38,7 +40,7 @@ elseif (NOT IOS)
         find_package(Qt5 COMPONENTS Gui REQUIRED)
     endif()
 
-    add_executable(KDHockeyAppCollectSymbols EXCLUDE_FROM_ALL)
+    add_executable(KDHockeyAppCollectSymbols)
     set_property(TARGET KDHockeyAppCollectSymbols PROPERTY OUTPUT_NAME collectsymbols)
     target_compile_features(KDHockeyAppCollectSymbols PUBLIC cxx_std_14)
     target_link_libraries(KDHockeyAppCollectSymbols PRIVATE Qt5::GuiPrivate)
