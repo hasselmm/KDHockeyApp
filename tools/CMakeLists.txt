@@ -2,13 +2,16 @@ cmake_minimum_required(VERSION 3.14)
 
 if (CMAKE_CROSSCOMPILING)
     message(STATUS "Building native toolchain in ${CMAKE_CURRENT_BINARY_DIR}/toolchain")
+    option(QT_ROOT_NATIVE "Path of the native Qt version to use")
 
-    get_filename_component(QT_ROOT_COMMON "${CMAKE_PREFIX_PATH}" DIRECTORY)
-
-    if (APPLE)
-        set(QT_ROOT_NATIVE "${QT_ROOT_COMMON}/clang_64")
-    else()
-        set(QT_ROOT_NATIVE "${QT_ROOT_COMMON}/mingw53_32")
+    if (NOT QT_ROOT_NATIVE)
+        if (CMAKE_HOST_APPLE)
+            set(QT_ROOT_NATIVE "$ENV{QT_ROOT_MACOS}")
+        elseif (CMAKE_HOST_WIN32)
+            set(QT_ROOT_NATIVE "$ENV{QT_ROOT_WINDOWS}")
+        else()
+            set(QT_ROOT_NATIVE "$ENV{QT_ROOT_LINUX}")
+        endif()
     endif()
 
     add_custom_command(
