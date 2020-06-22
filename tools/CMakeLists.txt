@@ -11,9 +11,10 @@ if (CMAKE_CROSSCOMPILING)
         set(QT_ROOT_NATIVE "${QT_ROOT_COMMON}/mingw53_32")
     endif()
 
-    add_custom_target(
-        KDHockeyAppToolchain ALL
-        DEPENDS GoogleBreakpadToolchain
+    add_custom_command(
+        COMMENT Configuring native toolchain
+        OUTPUT toolchain/CMakeCache.txt
+        DEPENDS CMakeLists.txt
 
         COMMAND ${CMAKE_COMMAND}
                 -G${CMAKE_GENERATOR}
@@ -21,9 +22,14 @@ if (CMAKE_CROSSCOMPILING)
                 -B${CMAKE_CURRENT_BINARY_DIR}/toolchain
                 -DCMAKE_PREFIX_PATH="${QT_ROOT_NATIVE}"
                 -DBREAKPAD_TARGET_NAME="${CMAKE_SYSTEM_NAME}"
+    )
 
-        COMMAND ${CMAKE_COMMAND}
-                --build toolchain --target KDHockeyAppToolchain)
+    add_custom_target(
+        KDHockeyAppToolchain ALL
+        DEPENDS toolchain/CMakeCache.txt GoogleBreakpadToolchain
+        COMMENT Building native toolchain
+        COMMAND ${CMAKE_COMMAND} --build toolchain --target KDHockeyAppToolchain
+    )
 elseif (NOT IOS)
     if (NOT TARGET Qt5::Core)
         find_package(Qt5 COMPONENTS Gui REQUIRED)

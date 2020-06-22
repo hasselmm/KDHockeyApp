@@ -3,17 +3,24 @@ cmake_minimum_required(VERSION 3.14)
 if (CMAKE_CROSSCOMPILING)
     message(STATUS "Building native toolchain in ${CMAKE_CURRENT_BINARY_DIR}/toolchain")
 
-    add_custom_target(
-        GoogleBreakpadToolchain ALL
+    add_custom_command(
+        COMMENT Configuring native toolchain
+        OUTPUT toolchain/CMakeCache.txt
+        DEPENDS CMakeLists.txt
 
         COMMAND ${CMAKE_COMMAND}
                 -G${CMAKE_GENERATOR}
                 -S${CMAKE_CURRENT_SOURCE_DIR}
                 -B${CMAKE_CURRENT_BINARY_DIR}/toolchain
                 -DBREAKPAD_TARGET_NAME=${CMAKE_SYSTEM_NAME}
+    )
 
-        COMMAND ${CMAKE_COMMAND}
-                --build toolchain --target GoogleBreakpadToolchain)
+    add_custom_target(
+        GoogleBreakpadToolchain ALL
+        COMMENT Building native toolchain
+        DEPENDS toolchain/CMakeCache.txt
+        COMMAND ${CMAKE_COMMAND} --build toolchain --target GoogleBreakpadToolchain
+    )
 else()
     add_custom_target(GoogleBreakpadToolchain)
 
