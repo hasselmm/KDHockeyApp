@@ -180,6 +180,8 @@ template<class Engine> auto engineContext(const Engine *engine, ...) -> decltype
 
 QByteArray HockeyAppManager::AppInfo::toByteArray() const
 {
+    using Qt::endl;
+
     QByteArray appInfo;
 
     QTextStream(&appInfo)
