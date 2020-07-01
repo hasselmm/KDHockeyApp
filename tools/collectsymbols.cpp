@@ -66,11 +66,11 @@ public:
         if (!dumpSymbols(target))
             return EXIT_FAILURE;
 
-        const auto dependencyList = dependencies(target);
-        if (!dependencyList.first)
+        const auto [found, dependencyList] = dependencies(target);
+        if (!found)
             return EXIT_FAILURE;
 
-        for (const auto &libraryName: dependencyList.second) {
+        for (const auto &libraryName: dependencyList) {
             if (!dumpSymbols(findLibrary(libraryName)))
                 return EXIT_FAILURE;
         }
