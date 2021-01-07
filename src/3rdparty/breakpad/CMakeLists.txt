@@ -4,28 +4,7 @@ if (NOT BREAKPAD_TARGET_NAME)
     set(BREAKPAD_TARGET_NAME ${CMAKE_SYSTEM_NAME})
 endif()
 
-if (CMAKE_CROSSCOMPILING) # ============================================================================================
-    message(STATUS "Building native toolchain in ${CMAKE_CURRENT_BINARY_DIR}/toolchain")
-
-    add_custom_command(
-        COMMENT Configuring native toolchain for Google Breakpad
-        OUTPUT toolchain/CMakeCache.txt
-        DEPENDS CMakeLists.txt
-
-        COMMAND ${CMAKE_COMMAND}
-                -G${CMAKE_GENERATOR}
-                -S${CMAKE_CURRENT_SOURCE_DIR}
-                -B${CMAKE_CURRENT_BINARY_DIR}/toolchain
-                -DBREAKPAD_TARGET_NAME=${CMAKE_SYSTEM_NAME}
-    )
-
-    add_custom_target(
-        GoogleBreakpadToolchain ALL
-        COMMENT Building native toolchain
-        DEPENDS toolchain/CMakeCache.txt
-        COMMAND ${CMAKE_COMMAND} --build toolchain --target GoogleBreakpadToolchain
-    )
-elseif (NOT BREAKPAD_TARGET_NAME MATCHES "Windows")
+if (NOT CMAKE_CROSSCOMPILING AND NOT BREAKPAD_TARGET_NAME MATCHES "Windows")
     add_executable(GoogleBreakpadDumpSyms) # ===========================================================================
     set_property(TARGET GoogleBreakpadDumpSyms PROPERTY OUTPUT_NAME dump_syms)
     target_link_libraries(GoogleBreakpadDumpSyms PUBLIC GoogleBreakpadCommon)
