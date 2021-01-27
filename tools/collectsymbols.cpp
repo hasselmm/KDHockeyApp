@@ -22,12 +22,21 @@ public:
         args.addOption({"readelf", "PATH", " The machine specific readelf binary to use"});
         args.addOption({"library-path", "PATH", " Directories of where to find shared libraries"});
         args.addPositionalArgument("TARGET", "The file from which to collect symbols");
-        args.parse(arguments());
+        args.addPositionalArgument("ARCHIVE", "The archive to create");
+        args.addHelpOption();
 
+        args.process(arguments());
         const auto pargs = args.positionalArguments();
 
-        if (pargs.size() != 2)
+        if (pargs.size() < 1) {
+            qWarning("Invalid usage: Target missing");
             return EXIT_FAILURE;
+        }
+
+        if (pargs.size() < 2) {
+            qWarning("Invalid usage: Archive missing");
+            return EXIT_FAILURE;
+        }
 
         m_dumpSyms = args.value("dumpsyms");
         m_readElf = args.value("readelf");
@@ -50,8 +59,10 @@ public:
         const auto target = pargs.at(0);
         const auto archive = pargs.at(1);
 
-        if (!archive.endsWith(".zip"))
+        if (!archive.endsWith(".zip")) {
+            qWarning("Invalid usage: Invalid target type");
             return EXIT_FAILURE;
+        }
 
         m_workDir.setPath(archive.left(archive.length() - 4));
         m_workDir.removeRecursively();
