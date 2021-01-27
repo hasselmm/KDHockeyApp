@@ -18,9 +18,9 @@ public:
     int run()
     {
         QCommandLineParser args;
-        args.addOption({"dumpsyms", "PATH", " The machine specific dumpsyms binary to use"});
-        args.addOption({"readelf", "PATH", " The machine specific readelf binary to use"});
-        args.addOption({"library-path", "PATH", " Directories of where to find shared libraries"});
+        args.addOption({"dumpsyms", "PATH", "The machine specific dumpsyms binary to use"});
+        args.addOption({"objdump", "PATH", "The machine specific objdump binary to use"});
+        args.addOption({"library-path", "PATH", "Directories of where to find shared libraries"});
         args.addPositionalArgument("TARGET", "The file from which to collect symbols");
         args.addPositionalArgument("ARCHIVE", "The archive to create");
         args.addHelpOption();
@@ -38,13 +38,13 @@ public:
             return EXIT_FAILURE;
         }
 
-        m_dumpSyms = args.value("dumpsyms");
-        m_readElf = args.value("readelf");
+        m_dumpsyms = args.value("dumpsyms");
+        m_objdump = args.value("objdump");
 
-        if (m_dumpSyms.isEmpty())
-            m_dumpSyms= "dump_syms";
-        if (m_readElf.isEmpty())
-            m_readElf = "readelf";
+        if (m_dumpsyms.isEmpty())
+            m_dumpsyms= "dump_syms";
+        if (m_objdump.isEmpty())
+            m_objdump = "objdump";
 
         m_libraryPath = args.values("library-path");
 
@@ -77,11 +77,12 @@ public:
         if (!dumpSymbols(target))
             return EXIT_FAILURE;
 
-        const auto [found, dependencyList] = dependencies(target);
-        if (!found)
+        const auto dependencyList = dependencies(target);
+
+        if (!dependencyList)
             return EXIT_FAILURE;
 
-        for (const auto &libraryName: dependencyList) {
+        for (const auto &libraryName: *dependencyList) {
             if (!dumpSymbols(findLibrary(libraryName)))
                 return EXIT_FAILURE;
         }
@@ -90,32 +91,57 @@ public:
     }
 
 private:
-    std::pair<bool, QStringList> dependencies(const QString &fileName)
+    bool waitForFinished(QProcess *process)
     {
-        QProcess readElf;
-        readElf.setReadChannel(QProcess::StandardOutput);
-        readElf.start(m_readElf, {"-d", fileName});
+        if (!process->waitForFinished()) {
+            qWarning("%ls: %ls", qUtf16Printable(process->program()), qUtf16Printable(process->errorString()));
+            return false;
+        }
 
-        if (!readElf.waitForReadyRead()) {
-            qWarning("Could not run readelf: %ls", qUtf16Printable(readElf.errorString()));
+        if (process->exitStatus() != QProcess::NormalExit) {
+            qWarning("%ls: The program has crashed.", qUtf16Printable(process->program()));
+            return false;
+        }
+
+        if (process->exitCode() != EXIT_SUCCESS) {
+            qWarning("%ls: The program has failed with exit code %d.",
+                     qUtf16Printable(process->program()), process->exitCode());
+            return false;
+        }
+
+        return true;
+    }
+
+    std::optional<QStringList> dependencies(const QFileInfo &fileInfo)
+    {
+        qInfo("Collecting dependencies for %ls...", qUtf16Printable(fileInfo.baseName()));
+
+        QProcess objdump;
+        objdump.setEnvironment({"LC_ALL=C"});
+        objdump.setProcessChannelMode(QProcess::ForwardedErrorChannel);
+        objdump.setReadChannel(QProcess::StandardOutput);
+        objdump.start(m_objdump, {"-x", fileInfo.filePath()});
+
+        if (!objdump.waitForReadyRead()) {
+            qWarning("%ls: %ls", qUtf16Printable(objdump.program()), qUtf16Printable(objdump.errorString()));
             return {};
         }
 
-        QRegularExpression pattern{".*\\(NEEDED\\).*\\[(.*)\\]"};
+        QRegularExpression pattern{R"(^\s+(?:NEEDED|DLL Name:)\s+(\S+))"};
         QStringList dependencies;
 
-        while (!readElf.atEnd()) {
-            const auto line = QString::fromLocal8Bit(readElf.readLine());
+        while (!objdump.atEnd()) {
+            const auto line = QString::fromLocal8Bit(objdump.readLine());
             const auto test = pattern.match(line);
 
             if (test.hasMatch())
                 dependencies.append(test.captured(1));
         }
 
-        if (!readElf.waitForFinished())
+        if (!waitForFinished(&objdump))
             return {};
 
-        return {true, dependencies};
+        return {dependencies};
     }
 
     QString findLibrary(const QString &libraryName)
@@ -131,18 +157,20 @@ private:
 
     bool dumpSymbols(const QFileInfo &fileInfo)
     {
-        const QFileInfo symbolFileInfo{m_workDir.filePath(fileInfo.baseName() + ".sym")};
+        qInfo("Scanning %ls...", qUtf16Printable(fileInfo.fileName()));
+        const QFileInfo symbolFileInfo{m_workDir.filePath(fileInfo.fileName() + ".sym")};
 
-        QProcess dumpSyms;
-        dumpSyms.setStandardOutputFile(symbolFileInfo.filePath());
-        dumpSyms.start(m_dumpSyms, {"-v", fileInfo.filePath()});
+        QProcess dumpsyms;
 
-        if (!dumpSyms.waitForFinished()) {
-            qWarning("Could not run dumpsyms: %ls", qUtf16Printable(dumpSyms.errorString()));
+        dumpsyms.setEnvironment({"LC_ALL=C"});
+        dumpsyms.setProcessChannelMode(QProcess::ForwardedErrorChannel);
+        dumpsyms.setStandardOutputFile(symbolFileInfo.filePath());
+        dumpsyms.start(m_dumpsyms, {fileInfo.filePath()});
+
+        if (!waitForFinished(&dumpsyms))
             return false;
-        }
 
-        dumpSyms.close();
+        dumpsyms.close();
 
         const auto symbolDir = "symbols/" + fileInfo.fileName() + "/" + moduleVersion(symbolFileInfo.filePath());
         const auto symbolFileName = symbolDir + "/" + symbolFileInfo.fileName();
@@ -180,8 +208,8 @@ private:
 
     std::unique_ptr<QZipWriter> m_zipWriter;
     QStringList m_libraryPath;
-    QString m_dumpSyms;
-    QString m_readElf;
+    QString m_dumpsyms;
+    QString m_objdump;
     QDir m_workDir;
 };
 
