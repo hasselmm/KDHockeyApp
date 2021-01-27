@@ -146,7 +146,7 @@ private:
 
     QString findLibrary(const QString &libraryName)
     {
-        for (const QDir path: m_libraryPath) {
+        for (const QDir &path: qAsConst(m_libraryPath)) {
             const auto fileName = path.filePath(libraryName);
             if (QFile::exists(fileName))
                 return fileName;
