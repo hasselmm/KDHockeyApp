@@ -7,6 +7,7 @@
 #include <private/qzipwriter_p.h>
 
 #include <memory>
+#include <optional>
 
 namespace KDHockeyApp {
 
