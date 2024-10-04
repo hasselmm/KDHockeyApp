@@ -1,3 +1,6 @@
+HockeyApp became AppCenter and AppCenter will be shutdown on March 2025.
+Therefore it's also time to archive this project.
+
 Introduction
 ============
 KD HockeyApp is a Qt-based library to interface with the HockeyApp beta
